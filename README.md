@@ -7,6 +7,7 @@ In August 2019 we [reported](https://www.bbc.co.uk/news/uk-england-49131405) tha
 ## Get the data
 
 * Environment Agency: [Catchment Data Explorer](https://environment.data.gov.uk/catchment-planning/)
+* XLSX: [Raw data for river quality 2013-2016 and analysis](https://github.com/BBC-Data-Unit/river-quality/blob/master/rivers_analysis.xlsx)
 
 ## Quotes and interviews
 
