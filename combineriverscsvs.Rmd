@@ -1,0 +1,212 @@
+---
+title: "Combine rivers CSVs"
+output: html_notebook
+---
+
+# Grab and combine rivers CSV files
+
+We want to fetch a bunch of CSV files, each at a location like this: `https://environment.data.gov.uk/catchment-planning/RiverBasinDistrict/4/ReasonsForNotAchievingGood?item=all&format=csv`. Each has a different number in the middle instead of 4
+
+## Fetching the numbers from JSON
+
+The numbers can be found in the links to the river basin districts [on this page](https://environment.data.gov.uk/catchment-planning/). I've gone to the source HTML and found this section of JSON that contains the numbers we need:
+
+```{json}
+{
+	"OperationalCatchment": [ ],
+	"ManagementCatchment": [ ],
+	"RiverBasinDistrict": [
+		{
+			"web-url": "RiverBasinDistrict/12",
+			"data-url": "catchment-planning/so/RiverBasinDistrict/12>",
+			"label": "North West",
+			"type": "River Basin District",
+			"gml": "gml/riverbasindistrict/12.gml"
+		},
+		{
+			"web-url": "RiverBasinDistrict/5",
+			"data-url": "catchment-planning/so/RiverBasinDistrict/5>",
+			"label": "Anglian",
+			"type": "River Basin District",
+			"gml": "gml/riverbasindistrict/5.gml"
+		},
+		{
+			"web-url": "RiverBasinDistrict/6",
+			"data-url": "catchment-planning/so/RiverBasinDistrict/6>",
+			"label": "Thames",
+			"type": "River Basin District",
+			"gml": "gml/riverbasindistrict/6.gml"
+		},
+		{
+			"web-url": "RiverBasinDistrict/7",
+			"data-url": "catchment-planning/so/RiverBasinDistrict/7>",
+			"label": "South East",
+			"type": "River Basin District",
+			"gml": "gml/riverbasindistrict/7.gml"
+		},
+		{
+			"web-url": "RiverBasinDistrict/2",
+			"data-url": "catchment-planning/so/RiverBasinDistrict/2>",
+			"label": "Solway Tweed",
+			"type": "River Basin District",
+			"gml": "gml/riverbasindistrict/2.gml"
+		},
+		{
+			"web-url": "RiverBasinDistrict/8",
+			"data-url": "catchment-planning/so/RiverBasinDistrict/8>",
+			"label": "South West",
+			"type": "River Basin District",
+			"gml": "gml/riverbasindistrict/8.gml"
+		},
+		{
+			"web-url": "RiverBasinDistrict/3",
+			"data-url": "catchment-planning/so/RiverBasinDistrict/3>",
+			"label": "Northumbria",
+			"type": "River Basin District",
+			"gml": "gml/riverbasindistrict/3.gml"
+		},
+		{
+			"web-url": "RiverBasinDistrict/11",
+			"data-url": "catchment-planning/so/RiverBasinDistrict/11>",
+			"label": "Dee",
+			"type": "River Basin District",
+			"gml": "gml/riverbasindistrict/11.gml"
+		},
+		{
+			"web-url": "RiverBasinDistrict/9",
+			"data-url": "catchment-planning/so/RiverBasinDistrict/9>",
+			"label": "Severn",
+			"type": "River Basin District",
+			"gml": "gml/riverbasindistrict/9.gml"
+		},
+		{
+			"web-url": "RiverBasinDistrict/4",
+			"data-url": "catchment-planning/so/RiverBasinDistrict/4>",
+			"label": "Humber",
+			"type": "River Basin District",
+			"gml": "gml/riverbasindistrict/4.gml"
+		}
+	],
+	"Waterbody": [],
+	"legend": [
+		{
+			"type": "River Basin District",
+			"color": "#00bd31"
+		}
+	]
+}
+```
+
+That's been imported into Open Refine and parsed to focus on the 'web-url' branch. Then exported as a CSV, in the same folder as this R project.
+
+We import that CSV:
+
+```{r import river basin codes}
+#Check if the user needs the rio package and install if they do
+if(!require(rio)){
+  install.packages("rio")
+}
+#Use rio's import function to bring in the data
+riverbasins <- rio::import("riverbasinjson.csv")
+```
+
+We could loop through all those and try to import - but actually the file that is downloaded is a zip file. 
+
+```{r download multiple csv files}
+#Store the beginning and end of the URL
+baseurl <- "https://environment.data.gov.uk/catchment-planning/"
+urlend <- "/ReasonsForNotAchievingGood?item=all&format=csv"
+#Loop through our list of 'middle parts' in the column specified
+for(i in riverbasins$`web-url`){
+  #Create a URL that inserts that 'middle part'
+  csvurl <- paste(baseurl,i,urlend, sep="")
+  #Show the new URL
+  print(csvurl)
+  #Create a temporary file
+  temp <- tempfile()
+  #Download the file from the URL to that temporary file
+  download.file(csvurl,temp)
+  #Store the ID number of the river basin
+  basinid <- gsub("RiverBasinDistrict/","",i)
+  #Use that ID number to name the CSV file we want inside the zip
+  filename <- paste("reasons_for_not_achieving_good_RBD_",basinid,".csv",sep="")
+  #Use that name to access and unzip the specified file
+  unzippedcsv <- read.csv(unz(temp, filename))
+  #Get rid of the temporary file
+  unlink(temp)
+  #Create a variable name based on that ID
+  newvarname <- paste("river", basinid, sep="")
+  #Assign the unzipped csv data frame to a new variable with that name
+  assign(newvarname, unzippedcsv)
+}
+#remove the temporary unzip
+rm(unzippedcsv, i, newvarname, temp)
+```
+
+Now combine
+
+```{r download and combine}
+#Store the beginning and end of the URL
+baseurl <- "https://environment.data.gov.uk/catchment-planning/"
+urlend <- "/ReasonsForNotAchievingGood?item=all&format=csv"
+#Create a base dataset we can start from
+#We've downloaded the first in the list and import that
+combineddata <- read.csv("reasons_for_not_achieving_good_RBD_12.csv")
+#Loop through our list of 'middle parts' in the column specified
+#We omit the first item because we've already imported that data
+for(i in riverbasins$`web-url`[2:10]){
+  #Create a URL that inserts that 'middle part'
+  csvurl <- paste(baseurl,i,urlend, sep="")
+  #Show the new URL
+  print(csvurl)
+  #Create a temporary file
+  temp <- tempfile()
+  #Download the file from the URL to that temporary file
+  download.file(csvurl,temp)
+  #Store the ID number of the river basin
+  basinid <- gsub("RiverBasinDistrict/","",i)
+  #Use that ID number to name the CSV file we want inside the zip
+  filename <- paste("reasons_for_not_achieving_good_RBD_",basinid,".csv",sep="")
+  #Use that name to access and unzip the specified file
+  unzippedcsv <- read.csv(unz(temp, filename))
+  #Get rid of the temporary file
+  unlink(temp)
+  #Create a variable name based on that ID
+  newvarname <- paste("river", basinid, sep="")
+  #Assign the unzipped csv data frame to a new variable with that name
+  assign(newvarname, unzippedcsv)
+  print("still going")
+  combineddata <- rbind(combineddata, unzippedcsv)
+}
+#remove the temporary unzip
+rm(unzippedcsv, i, newvarname, temp)
+```
+
+Let's get an overview
+
+```{r table of the areas covered}
+table(combineddata$River.Basin.District)
+```
+
+
+```{r}
+summary(combineddata)
+```
+
+
+We could also download them manually, unzip and combine in Open Refine, then export as a single file. I did that separately, and imported to check below:
+
+```{r import csv}
+combineddata.or <- rio::import("reasons_for_not_achieving_good_RBD_ALL.csv")
+```
+
+## Export data to use in separate notebook
+
+We will save the results as an .rds file so that it can be picked up in a separate notebook for analysis
+
+```{r saverds}
+saveRDS(combineddata, "combineddata.rds")
+#And export as CSV to compare
+write.csv(combineddata, "combineddata.csv")
+```
+

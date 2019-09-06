@@ -1,0 +1,42 @@
+---
+title: "Combine rivers CSVs"
+output: html_notebook
+---
+
+# Analyse rivers data
+
+In another notebook we fetched and combined multiple CSVs. The results of that can be imported in the line below:
+
+```{r readrds}
+combineddata<- readRDS("combineddata.rds")
+```
+
+## Narrow the scope
+
+```{r filter}
+riversonly <- dplyr::filter(combineddata, Water.body.type == "River")
+riversonly <- dplyr::filter(riversonly, Activity != "Not applicable")
+riversonly <- dplyr::filter(riversonly, Activity != "Other (not in list, must add details in comments)")
+```
+
+## Add unique identifier
+
+```{r create new cols}
+#Combine body id and year
+riversonly$riveryearid <- paste(riversonly$Water.body.id, riversonly$Classification.Year, sep="-")
+#Does the Activity column contain 'sewage'
+riversonly$sewage <- grepl(".*ewage.*", riversonly$Activity)
+```
+
+```{r sql}
+riveranalysis <- sqldf::sqldf("SELECT count(riveryearid) as rivers, sewage, `Classification.Year`
+             FROM riversonly 
+            GROUP BY `Classification.Year`, sewage
+            ORDER BY `Classification.Year`, sewage desc
+             LIMIT 10")
+```
+
+
+
+
+
