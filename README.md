@@ -2,7 +2,7 @@
 
 ![](https://ichef.bbci.co.uk/news/624/cpsprodpb/46BB/production/_108470181_rivermap4-nc.png)
 
-In August 2019 we [reported](https://www.bbc.co.uk/news/uk-england-49131405) that river quality targets were "very unlikely" to be met in England.
+In August 2019 we [reported](https://www.bbc.co.uk/news/uk-england-49131405) that river quality targets were "very unlikely" to be met in England. The story was the result of analysing data from the Environment Agency which had to be downloaded, combined and cleaned. 
 
 ## Get the data
 
@@ -25,3 +25,8 @@ In August 2019 we [reported](https://www.bbc.co.uk/news/uk-england-49131405) tha
 * Choropleth map: Percentage of rivers meeting 'good' ecological status in each river basin district
 * Multiple bar chart: Percentage of rivers meeting 'good' ecological status in 2016, versus government predictons for 2027
 * Bar chart: incidents per 10,000km of sewer in 2018
+
+## Scripts
+
+* R Notebook: [Fetch and combine river data CSV files](https://github.com/BBC-Data-Unit/river-quality/blob/master/combineriverscsvs.Rmd)
+* R Notebook: [Analyse rivers data](https://github.com/BBC-Data-Unit/river-quality/blob/master/analyserivers.Rmd)
