@@ -8,6 +8,7 @@ In August 2019 we [reported](https://www.bbc.co.uk/news/uk-england-49131405) tha
 
 * Environment Agency: [Catchment Data Explorer](https://environment.data.gov.uk/catchment-planning/)
 * XLSX: [Raw data for river quality 2013-2016 and analysis](https://github.com/BBC-Data-Unit/river-quality/blob/master/rivers_analysis.xlsx)
+* XLSX: [Further rivers analysis](https://github.com/BBC-Data-Unit/river-quality/blob/master/Rivers%20data%20-%20BBC%20England%20data%20unit.xlsx)
 
 ## Quotes and interviews
 
